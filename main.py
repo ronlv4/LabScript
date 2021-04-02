@@ -14,6 +14,8 @@ x = df["x"].values
 y_err = df["y_err"].values
 x_err = df["x_err"].values
 
+print(y)
+
 # function
 linear_fun = lambda X, a, b: a * X + b
 pol_2_fun = lambda X, a, b, c: a * X ** 2 + b * X + c
