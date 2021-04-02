@@ -13,10 +13,6 @@ y = df["y"].values
 x = df["x"].values
 y_err = df["y_err"].values
 x_err = df["x_err"].values
-print(y)
-
-gaussian_array = np.random.normal(3, 2.5, size=(2, 4))
-print(gaussian_array)
 
 # function
 linear_fun = lambda X, a, b: a * X + b
