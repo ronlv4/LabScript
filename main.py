@@ -34,6 +34,9 @@ x = df["x"].values
 y_err = df["y_err"].values
 x_err = df["x_err"].values
 
+x_err = np.full_like(x,dtype=float, fill_value=x_err[0])
+y_err = np.full_like(y,dtype=float, fill_value=y_err[0])
+
 # function
 linear_fun = lambda X, a, b: a * X + b
 pol_2_fun = lambda X, a, b, c: a * X ** 2 + b * X + c
@@ -111,4 +114,5 @@ ax.set_ylabel(r'Pressure [mmHg]', fontdict={"size": 20, "weight": "bold"})
 ax.set_title("Pressure as a Function of Rings Created", fontdict={"size": 24, "weight": "bold"})
 ax.errorbar(x=x, y=y, yerr=y_err, xerr=x_err, capsize=4, elinewidth=3, fmt='none', ecolor="blue")
 ax.scatter(x, y, c='blue', s=10)
+right_parmloc = (0.7,0.95)
 reg.show(minuit=None, parmloc=(0.7,0.95), errors=opt.errors)
