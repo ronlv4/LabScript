@@ -1,3 +1,5 @@
+import math
+
 from iminuit import Minuit
 from probfit import Chi2Regression
 import numpy as np
@@ -5,7 +7,8 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import warnings
 
-def findErrorForChi2overNDOFis1(function, start, end, dx,err_size):
+
+def findErrorForChi2overNDOFis1(function, start, end, dx, err_size):
     errors = np.arange(start, end, dx)
     errors_array = []
     for error in errors:
@@ -14,10 +17,10 @@ def findErrorForChi2overNDOFis1(function, start, end, dx,err_size):
     y_err = np.array(errors_array[0:err_size])
     reg = Chi2Regression(linear_fun, x, y, y_err, weights=None)
     i = 0
-    opt = Minuit(reg, a=0,b=0)
+    opt = Minuit(reg, a=0, b=0)
     opt.migrad()
     # print(reg.__call__(0.1,0.1))
-    while abs(opt.fval / reg.ndof - 1) > 0.1 and i < len(errors_array) - 12:
+    while abs(opt.fval / reg.ndof - 1) > 0.01 and i < len(errors_array) - 12:
         y_err = np.array(errors_array[i:i + err_size])
         reg = Chi2Regression(linear_fun, x, y, y_err, weights=None)
         # print(reg.__call__(0,0)/reg.ndof)
@@ -29,19 +32,48 @@ def findErrorForChi2overNDOFis1(function, start, end, dx,err_size):
 
 
 df = pd.read_excel('Data.xlsx')
-y = df["y"].values
-x = df["x"].values
+y = df["y"].values  # Voltage
+x= df["x"].values  # diameter
 y_err = df["y_err"].values
 x_err = df["x_err"].values
 
+
+# i = np.full_like(T,dtype=float, fill_value=i[0])
+x_err = np.full_like(x,dtype=float, fill_value=x_err[0])
+y_err = np.full_like(y,dtype=float, fill_value=y_err[0])
+# B_err = np.full_like(T ,dtype=float, fill_value=B_err[0])
+
+# calculations
+i = y
+i_squared = i * i
+r = x / 2  # radius
+# r_squared = r ** 2  # r^2
+
+# y = 1 / (i ** 2)
+# x = r**2
+x=r
+y=i
+# x_err = x_err * r
+# y_err = (2 / (i ** 3)) * y_err
+# y=(((2*np.pi)/T)**2)*i
+# x=B
+# y_err = ((2*(2*np.pi/T)*(1/(T**2))*T_err)**2+((((2*np.pi)/T)**2)*i_err)**2)**0.5
+# print(y_err)
+# x_err = B_err
+# print("y: ", y)
+# print("y error: ", y_err)
+# print("x: ", x)
+# print("x error: ", x_err)
+
 # function
-linear_fun = lambda X, a, b: a * X + b
-pol_2_fun = lambda X, a, b, c: a * X ** 2 + b * X + c
-pol_3_fun = lambda X, a, b, c, d: a * X ** 3 + b * X ** 2 + c * X + d
-sin_fun = lambda X, a, b: a * np.sin(b * X)
-exp_fun = lambda X, a, b: a * np.exp(b * X)
-gaussian = lambda X, a, e, s: a*np.exp(-((X-e)**2)/(2*s**2))
-# y_err=findErrorForChi2overNDOFis1(linear_fun, 0.0250454, 0.0250455, 0.00000000001, len(x))
+linear_fun = lambda x, a, b: a * x + b
+pol_2_fun = lambda x, a, b, c: a * x ** 2 + b * x + c
+pol_3_fun = lambda x, a, b, c, d: a * x ** 3 + b * x ** 2 + c * x + d
+sin_fun = lambda x, a, b: a * np.sin(b * x)
+exp_fun = lambda x, a, b: a * np.exp(b * x)
+gaussian = lambda x, a, e, s: a * np.exp(-((x - e) ** 2) / (2 * s ** 2))
+hiperbol_fun = lambda x, a, b, c: (a / (b * x)) + c
+# y_err=findErrorForChi2overNDOFis1(linear_fun, 4.13348623, 4.13348627, 0.0000000001, len(x))
 
 # define the regression,i.e. the function to be minimized, in our usual case we use Chi2Regression this is an already
 # built method to pass chi2 to Minuit as the function to be minimized
@@ -104,11 +136,12 @@ opt.migrad()  # actually do the fitting, i.e. run the optimization, i.e. minimiz
 
 plt.rc("font", size=16, family="Times New Roman")
 fig = plt.figure(figsize=(10, 6))
-ax = fig.add_axes([0.1, 0.15, .85, .77])
+ax = fig.add_axes([0.1, 0.15, .85, .72])
 # L B R T
-ax.set_xlabel(r'Number of Rings', fontdict={"size": 20, "weight": "bold"})
-ax.set_ylabel(r'Pressure [mmHg]', fontdict={"size": 20, "weight": "bold"})
-ax.set_title("Pressure as a Function of Rings Created", fontdict={"size": 24, "weight": "bold"})
+ax.set_xlabel(r'$ I[A] $', fontdict={"size": 20, "weight": "bold"})
+ax.set_ylabel(r'$ B[\mu T] $', fontdict={"size": 20, "weight": "bold"})
+ax.set_title("Magnetic Field as a Function of Current", fontdict={"size": 24, "weight": "bold"})
 ax.errorbar(x=x, y=y, yerr=y_err, xerr=x_err, capsize=4, elinewidth=3, fmt='none', ecolor="blue")
 ax.scatter(x, y, c='blue', s=10)
-reg.show(minuit=None, parmloc=(0.7,0.95), errors=opt.errors)
+right_parm_loc = (0.7, 0.95)
+reg.show(minuit=None, errors=opt.errors)
