@@ -64,22 +64,29 @@ class EffVarChi2Reg:  # This class is like Chi2Regression but takes into account
 
 # an example usage
 df = pd.read_excel(r'Data.xlsx')
-measured_x = df['x'].values
-measured_y = df['y'].values
-x_uncertainties = np.full_like(measured_x, df['x_err'].values[0], float)
-y_uncertainties = np.full_like(measured_y, df['y_err'].values[0], float)
+s_with = df['s_with'].values
+s_without = df['s_without'].values
+a_with = df['a_with'].values
+a_without = df['a_without'].values
+voltage = df['voltage'].values
+s_err = np.full_like(s_with, df['s_err'].values[0], float)
+a_err = np.full_like(a_with, df['a_err'].values[0], float)
+v_err = np.full_like(voltage, df['v_err'].values[0], float)
 
+x = voltage
+x_err = v_err
+y = 1 - (a_with * s_without) / (a_without * s_with)
+y_err = a_err
 # Let's do a fit to a linear function (but EffVarChi2Reg will work for any function of x)
 linear_fun = lambda x, a, b: a + (x * b)
 # just note that in practice it will be used for the same thing but in "coding" terms this is
 # a different variable x than x in the class def above
 exp_fun = lambda x, a, b: a * np.exp(b * x)
 # Now we create a regression object (from the class defined above) with our example data and function
-efvtest = EffVarChi2Reg(linear_fun, measured_x, measured_y, x_uncertainties,
-                        y_uncertainties)  # the syntax for EffVarChi2Reg is (function, x,y,dx,dy)
+efvtest = EffVarChi2Reg(linear_fun, x,y, x_err, y_err)  # the syntax for EffVarChi2Reg is (function, x,y,dx,dy)
 
 # Feed the regression object we just made to Minuit
-efopt = Minuit(efvtest, a=1, b=-1)
+efopt = Minuit(efvtest)
 # the syntax is similar the same as when using Chi2Regression or any other function that Minuit works with, i.e. you could put limits etc here also
 
 # Run the minimization
@@ -89,7 +96,7 @@ efopt.migrad()
 v = np.array(efopt.values)
 u = np.array(efopt.errors)
 number_param = len(list(efopt.values))
-ndof = len(measured_x) - number_param
+ndof = len(x) - number_param
 chi2_ndof = efopt.fval / ndof
 # print("intercept is %0.4f \u00B1 %0.4f" %(v[0],u[0]))
 # print(10 * "---")
