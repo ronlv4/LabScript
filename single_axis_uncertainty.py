@@ -31,6 +31,7 @@ def findErrorForChi2overNDOFis1(function, start, end, dx,err_size):
 df = pd.read_excel('Data.xlsx')
 y = df["y"].values
 x = df["x"].values
+x=1/x * 10 ** 6
 y_err = df["y_err"].values
 x_err = df["x_err"].values
 

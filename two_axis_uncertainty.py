@@ -66,8 +66,11 @@ class EffVarChi2Reg:  # This class is like Chi2Regression but takes into account
 df = pd.read_excel(r'Data.xlsx')
 measured_x = df['x'].values
 measured_y = df['y'].values
+measured_x = 1 /measured_x * 10 ** 6
+print(measured_x)
 x_uncertainties = np.full_like(measured_x, df['x_err'].values[0], float)
-y_uncertainties = np.full_like(measured_y, df['y_err'].values[0], float)
+# y_uncertainties = np.full_like(measured_y, df['y_err'].values[0], float)
+y_uncertainties = df['y_err'].values
 
 # Let's do a fit to a linear function (but EffVarChi2Reg will work for any function of x)
 linear_fun = lambda x, a, b: a + (x * b)
