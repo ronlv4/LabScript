@@ -6,6 +6,7 @@ from pylab import *
 from numpy import *
 import numpy as np
 import pandas as pd
+from scipy import constants
 from matplotlib import pylab, mlab, pyplot
 import warnings
 
@@ -50,12 +51,13 @@ class EffVarChi2Reg:  # This class is like Chi2Regression but takes into account
         self.y_fit = self.model(self.func_x, self.par_values[0], self.par_values[1])
         plt.rc("font", size=16, family="Times New Roman")
         fig = plt.figure(figsize=(8, 6))
-        ax = fig.add_axes([0.1, 0.1, .88, .88])
+        ax = fig.add_axes([0.15, 0.12, .82, .8])
         ax.plot(self.func_x, self.y_fit)  # plot the function over 10k points covering the x axis
         ax.scatter(self.x, self.y, c="red")
         ax.errorbar(self.x, self.y, self.dy, self.dx, fmt='none', ecolor='red', capsize=3)
         ax.set_xlabel(x_title, fontdict={"size": 21})
         ax.set_ylabel(y_title, fontdict={"size": 21})
+        ax.set_title("Rings Radius as a Function of Electron Wavelength", fontdict={"size": 21})
         anchored_text = AnchoredText(text, loc=goodness_loc)
         ax.add_artist(anchored_text)
         plt.grid(True)
@@ -63,17 +65,28 @@ class EffVarChi2Reg:  # This class is like Chi2Regression but takes into account
 
 
 # an example usage
+h = constants.h
+m = constants.m_e
+e = constants.e
 df = pd.read_excel(r'Data.xlsx')
-measured_x = df['x'].values
-measured_y = df['y'].values
-measured_x = 1 /measured_x * 10 ** 6
-print(measured_x)
-x_uncertainties = np.full_like(measured_x, df['x_err'].values[0], float)
-# y_uncertainties = np.full_like(measured_y, df['y_err'].values[0], float)
-y_uncertainties = df['y_err'].values
+measured_x = df['x'].values  # lambda
+v = df['v'].values * 1000  # Voltage
+v_uncertainties = np.full_like(measured_x, df['v_err'].values[0], float) * 1000
+print(v)
+print(v_uncertainties)
+measured_y = df['y'].values / 100 # radius
+l = h/((2*m * e * v) ** 0.5)
+for w in l:
+    print(w)
 
+y_uncertainties = np.full_like(measured_y, df['y_err'].values[0], float) / 100
+# y_uncertainties = np.full_like(measured_y, df['y_err'].values[0], float)
+x_uncertainties = (h/((8 * m * e) ** 0.5)) * (v ** -1.5) * v_uncertainties
+print("uncert")
+for uncert in x_uncertainties:
+    print(uncert)
 # Let's do a fit to a linear function (but EffVarChi2Reg will work for any function of x)
-linear_fun = lambda x, a, b: a + (x * b)
+linear_fun = lambda x, a, b: a * x + b
 # just note that in practice it will be used for the same thing but in "coding" terms this is
 # a different variable x than x in the class def above
 exp_fun = lambda x, a, b: a * np.exp(b * x)
@@ -100,4 +113,4 @@ chi2_ndof = efopt.fval / ndof
 # print(10 * "---")
 # print("Chi2/ndof is %0.4f(%0.4f/%d)"%(chi2_ndof,efopt.fval,ndof))
 
-efvtest.show(efopt, goodness_loc='upper right', x_title="X_data", y_title="Y_data")
+efvtest.show(efopt, goodness_loc='upper left', x_title=r'$ \lambda [m] $', y_title=r'Radius [m]')
